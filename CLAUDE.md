@@ -1,0 +1,1 @@
+C:/Users/Abd/code/bgg/AGENTS.md

@@ -1,0 +1,24 @@
+{
+  "name": "bgg",
+  "module": "index.ts",
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@types/bun": "latest",
+    "lefthook": "^2.1.6"
+  },
+  "peerDependencies": {
+    "typescript": "^6"
+  },
+  "private": true,
+  "scripts": {
+    "collection": "bun run src/app/collection.ts",
+    "check": "biome check",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "lefthook install"
+  },
+  "type": "module",
+  "dependencies": {
+    "@clack/prompts": "^1.3.0",
+    "citty": "^0.2.2"
+  }
+}
