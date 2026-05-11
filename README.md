@@ -76,16 +76,21 @@ Use Bun for local development:
 
 ```sh
 bun install
+bun run install-hooks
 bun test
 bun run check
 bun run typecheck
 ```
+
+`bun run install-hooks` enables Lefthook git hooks (optional, for contributors working in this repo).
 
 Publish with Bun when you are ready:
 
 ```sh
 bun publish
 ```
+
+`prepublishOnly` runs check, typecheck, and tests before publishing.
 
 New collection CLI behavior should be added under `src/app/`, and shared collection logic should live in `src/lib/collection.ts`.
 

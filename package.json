@@ -1,6 +1,6 @@
 {
   "name": "@aabuhijleh/bgg-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Manage your BoardGameGeek collection from a Bun CLI",
   "author": {
     "name": "aabuhijleh",
@@ -17,20 +17,22 @@
   "type": "module",
   "private": false,
   "bin": {
-    "bgg": "./src/app/collection.ts"
+    "bgg": "./bin/bgg"
   },
   "publishConfig": {
     "access": "public"
   },
   "files": [
+    "bin",
     "src",
     "README.md"
   ],
   "scripts": {
     "collection": "bun src/app/collection.ts",
     "check": "biome check",
-    "typecheck": "tsc --noEmit",
-    "prepare": "lefthook install"
+    "install-hooks": "lefthook install",
+    "prepublishOnly": "bun run check && bun run typecheck && bun test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@clack/prompts": "^1.3.0",
