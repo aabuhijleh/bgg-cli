@@ -9,3 +9,7 @@ pre-commit:
     - name: types
       glob: "*.{ts,tsx}"
       run: bun run typecheck
+
+    - name: tests
+      glob: "*.{ts,tsx}"
+      run: bun test

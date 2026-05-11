@@ -2,14 +2,6 @@
 
 This Bun-first TypeScript project manages your BoardGameGeek collection from the CLI.
 
-## Sign-in and stored data
-
-On first use, the CLI prompts for your BoardGameGeek username and password and saves them under your user config directory (for example `~/.config/bgg-cli/credentials.json` on macOS and Linux).
-
-Session cookies for authenticated collection requests are cached next to that file as `collection-auth.json`. If BGG rejects those cookies, the CLI logs in again using your saved password.
-
-If `XDG_CONFIG_HOME` is set, the CLI uses `$XDG_CONFIG_HOME/bgg-cli/` instead of `~/.config/bgg-cli/`.
-
 ## Prerequisites
 
 - [Bun](https://bun.sh/) runtime installed
@@ -30,6 +22,14 @@ bun add -g @aabuhijleh/bgg-cli
 bgg list
 bgg sync ./games.json
 ```
+
+## Sign-in and stored data
+
+On first use, the CLI prompts for your BoardGameGeek username and password and saves them under your user config directory (for example `~/.config/bgg-cli/credentials.json` on macOS and Linux).
+
+Session cookies for authenticated collection requests are cached next to that file as `collection-auth.json`. If BGG rejects those cookies, the CLI logs in again using your saved password.
+
+If `XDG_CONFIG_HOME` is set, the CLI uses `$XDG_CONFIG_HOME/bgg-cli/` instead of `~/.config/bgg-cli/`.
 
 ## Collection CLI
 
@@ -80,7 +80,7 @@ Use Bun for local development:
 
 ```sh
 bun install
-bun run install-hooks
+bunx lefthook install
 bun test
 bun run check
 bun run typecheck
