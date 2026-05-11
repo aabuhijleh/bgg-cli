@@ -10,6 +10,10 @@ Session cookies for authenticated collection requests are cached next to that fi
 
 If `XDG_CONFIG_HOME` is set, the CLI uses `$XDG_CONFIG_HOME/bgg-cli/` instead of `~/.config/bgg-cli/`.
 
+## Prerequisites
+
+- [Bun](https://bun.sh/) runtime installed
+
 ## Installation
 
 Run the CLI directly from npm with Bun:
