@@ -1,7 +1,7 @@
 import { log } from "@clack/prompts";
 import { defineCommand } from "citty";
-import { appCollectionAuthOptions } from "~/app/credentials.ts";
-import { withCollectionClient } from "~/lib/collection.ts";
+import { withCollectionClient } from "../../lib/collection.ts";
+import { appCollectionAuthOptions } from "../credentials.ts";
 import {
   formatCollectionCount,
   formatCollectionEntry,

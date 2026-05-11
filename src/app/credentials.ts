@@ -5,7 +5,7 @@ import {
   type CollectionAuthOptions,
   CREDENTIALS_FILENAME,
   getBggCliConfigDirectory,
-} from "~/lib/collection.ts";
+} from "../lib/collection.ts";
 
 export async function promptBggCredentials(): Promise<{
   password: string;

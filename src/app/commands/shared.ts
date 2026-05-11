@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 
-import type { OwnedCollectionEntry } from "~/lib/collection.ts";
+import type { OwnedCollectionEntry } from "../../lib/collection.ts";
 
 export function parsePositiveInteger(
   value: string | undefined,
