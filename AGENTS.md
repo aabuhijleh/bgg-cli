@@ -18,7 +18,7 @@
 - Use the shared collection helpers in `src/lib/collection.ts` for all BoardGameGeek collection endpoints. Do not repeat login, cookie-cache, refresh, or request-header logic in apps or scripts.
 - Collection endpoints use browser login cookies, not a `GeekAuth` bearer-style token. Login posts `BGG_USERNAME` and `BGG_PASSWORD` to `https://boardgamegeek.com/login/api/v1` and must capture `bggusername`, `bggpassword`, and `SessionID` from `Set-Cookie`.
 - Authenticated collection requests send those three cookies as `Cookie: bggusername=...; bggpassword=...; SessionID=...`.
-- Cookies are cached at `.cache/bgg-collection-auth.json` by default. `BGG_COLLECTION_AUTH_CACHE_PATH` can override the cache path.
+- Cookies are cached at `.cache/bgg-collection-auth.json`.
 - If BGG returns `401` or HTML that points at `/login`, treat the cache as stale, delete it, log in once, and retry the operation once through `runWithCollectionAuth()`.
 
 ## Change Guidelines

@@ -1,3 +1,5 @@
+#! /usr/bin/env bun
+
 import { defineCommand, runMain } from "citty";
 
 export const main = defineCommand({
@@ -15,6 +17,4 @@ export const main = defineCommand({
   },
 });
 
-if (import.meta.main) {
-  await runMain(main);
-}
+runMain(main);

@@ -1,4 +1,4 @@
-# BGG Collection CLI
+# BGG CLI
 
 This Bun-first TypeScript project manages your BoardGameGeek owned collection from the `src/app/collection.ts` CLI.
 
@@ -11,7 +11,7 @@ BGG_USERNAME=your_bgg_username
 BGG_PASSWORD=your_bgg_password
 ```
 
-The CLI logs in to `https://boardgamegeek.com/login/api/v1` and stores the browser cookies BGG collection endpoints require in `.cache/bgg-collection-auth.json`. Set `BGG_COLLECTION_AUTH_CACHE_PATH` if you want a different cache file.
+The CLI logs in to `https://boardgamegeek.com/login/api/v1` and stores the browser cookies BGG collection endpoints require in `.cache/bgg-collection-auth.json`.
 
 ## Collection CLI
 

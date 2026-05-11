@@ -7,8 +7,10 @@ import {
   buildCollectionCookieHeader,
   buildDeleteCollectionItemBody,
   createCollectionClient,
+  DEFAULT_COLLECTION_AUTH_CACHE_PATH,
   DEFAULT_GAMES_PATH,
   extractOwnedGameIds,
+  getCollectionAuthCachePath,
   parseOwnedCollectionEntries,
   planOwnedCollectionSync,
   runWithCollectionAuth,
@@ -17,6 +19,31 @@ import {
 describe("collection defaults", () => {
   test("reads games from the src data directory by default", () => {
     expect(DEFAULT_GAMES_PATH).toBe("src/data/games.json");
+  });
+
+  test("uses the hardcoded collection auth cache path instead of an env var", () => {
+    const cachePathVariable = [
+      "BGG",
+      "COLLECTION",
+      "AUTH",
+      "CACHE",
+      "PATH",
+    ].join("_");
+    const originalCachePath = Bun.env[cachePathVariable];
+
+    try {
+      Bun.env[cachePathVariable] = "tmp/auth.json";
+
+      expect(getCollectionAuthCachePath({})).toBe(
+        DEFAULT_COLLECTION_AUTH_CACHE_PATH,
+      );
+    } finally {
+      if (originalCachePath === undefined) {
+        delete Bun.env[cachePathVariable];
+      } else {
+        Bun.env[cachePathVariable] = originalCachePath;
+      }
+    }
   });
 });
 

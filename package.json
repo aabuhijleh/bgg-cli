@@ -11,7 +11,7 @@
   },
   "private": true,
   "scripts": {
-    "collection": "bun run src/app/collection.ts",
+    "collection": "bun src/app/collection.ts",
     "check": "biome check",
     "typecheck": "tsc --noEmit",
     "postinstall": "lefthook install"

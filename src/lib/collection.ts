@@ -194,10 +194,7 @@ export async function runWithCollectionAuth<T>(
   operation: (cookies: CollectionCookies) => Promise<T>,
   options: CollectionAuthOptions = {},
 ): Promise<T> {
-  const cachePath =
-    options.cachePath ??
-    Bun.env.BGG_COLLECTION_AUTH_CACHE_PATH ??
-    DEFAULT_COLLECTION_AUTH_CACHE_PATH;
+  const cachePath = getCollectionAuthCachePath(options);
   const cookies = await getCollectionCookies(cachePath, options);
 
   try {
@@ -215,6 +212,12 @@ export async function runWithCollectionAuth<T>(
 
     return operation(refreshedCookies);
   }
+}
+
+export function getCollectionAuthCachePath(
+  options: Pick<CollectionAuthOptions, "cachePath">,
+): string {
+  return options.cachePath ?? DEFAULT_COLLECTION_AUTH_CACHE_PATH;
 }
 
 export function createCollectionClient(options: CollectionClientOptions): {
