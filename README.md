@@ -86,16 +86,8 @@ bun run check
 bun run typecheck
 ```
 
-`bun run install-hooks` enables Lefthook git hooks (optional, for contributors working in this repo).
-
 Publish with Bun when you are ready:
 
 ```sh
 bun publish
 ```
-
-`prepublishOnly` runs check, typecheck, and tests before publishing.
-
-New collection CLI behavior should be added under `src/app/`, and shared collection logic should live in `src/lib/collection.ts`.
-
-This project should always use Bun APIs instead of Node APIs. For file I/O, use `Bun.file()` for reading, existence checks, and deletes, and `Bun.write()` for writes or copies. Use `Bun.env` only for ambient process environment values (for example `HOME`, `XDG_CONFIG_HOME`), not for BGG account secrets.
