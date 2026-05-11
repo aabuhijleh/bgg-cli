@@ -6,11 +6,15 @@ import {
   buildAddOwnedGameBody,
   buildCollectionCookieHeader,
   buildDeleteCollectionItemBody,
+  COLLECTION_AUTH_FILENAME,
+  CREDENTIALS_FILENAME,
   createCollectionClient,
-  DEFAULT_COLLECTION_AUTH_CACHE_PATH,
   DEFAULT_GAMES_PATH,
   extractOwnedGameIds,
+  getBggCliConfigDirectory,
   getCollectionAuthCachePath,
+  getCredentialsFilePath,
+  joinPathSegments,
   parseOwnedCollectionEntries,
   planOwnedCollectionSync,
   runWithCollectionAuth,
@@ -21,27 +25,30 @@ describe("collection defaults", () => {
     expect(DEFAULT_GAMES_PATH).toBe("src/data/games.json");
   });
 
-  test("uses the hardcoded collection auth cache path instead of an env var", () => {
-    const cachePathVariable = [
-      "BGG",
-      "COLLECTION",
-      "AUTH",
-      "CACHE",
-      "PATH",
-    ].join("_");
-    const originalCachePath = Bun.env[cachePathVariable];
+  test("uses the shared bgg-cli config directory for credentials and session cache", () => {
+    const directory = "/tmp/mock-home/.config/bgg-cli";
+
+    expect(getCredentialsFilePath({ configDirectory: directory })).toBe(
+      joinPathSegments(directory, CREDENTIALS_FILENAME),
+    );
+    expect(getCollectionAuthCachePath({ configDirectory: directory })).toBe(
+      joinPathSegments(directory, COLLECTION_AUTH_FILENAME),
+    );
+  });
+
+  test("respects XDG_CONFIG_HOME for config directory placement", () => {
+    const previous = Bun.env.XDG_CONFIG_HOME;
+    Bun.env.XDG_CONFIG_HOME = "/xdg-config";
 
     try {
-      Bun.env[cachePathVariable] = "tmp/auth.json";
-
-      expect(getCollectionAuthCachePath({})).toBe(
-        DEFAULT_COLLECTION_AUTH_CACHE_PATH,
+      expect(getBggCliConfigDirectory()).toBe(
+        joinPathSegments("/xdg-config", "bgg-cli"),
       );
     } finally {
-      if (originalCachePath === undefined) {
-        delete Bun.env[cachePathVariable];
+      if (previous === undefined) {
+        delete Bun.env.XDG_CONFIG_HOME;
       } else {
-        Bun.env[cachePathVariable] = originalCachePath;
+        Bun.env.XDG_CONFIG_HOME = previous;
       }
     }
   });

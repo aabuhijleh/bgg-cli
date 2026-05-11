@@ -1,5 +1,6 @@
 import { log } from "@clack/prompts";
 import { defineCommand } from "citty";
+import { appCollectionAuthOptions } from "~/app/credentials.ts";
 import {
   DEFAULT_GAMES_PATH,
   readGameIds,
@@ -30,7 +31,7 @@ async function syncCollection(gamesPath: string): Promise<void> {
     log.info(`Syncing ${gameIds.length} games from ${gamesPath}...`);
     await client.syncOwnedGames(gameIds);
     log.success("Synced owned collection.");
-  });
+  }, appCollectionAuthOptions);
 }
 
 export default syncCommand;

@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts";
 import { defineCommand } from "citty";
+import { appCollectionAuthOptions } from "~/app/credentials.ts";
 import {
   type OwnedCollectionEntry,
   withCollectionClient,
@@ -62,7 +63,7 @@ async function deleteCollection(collidText?: string): Promise<void> {
       () => client.deleteCollectionItem(collid),
       `Deleted ${label}.`,
     );
-  });
+  }, appCollectionAuthOptions);
 }
 
 async function promptForCollectionRow(

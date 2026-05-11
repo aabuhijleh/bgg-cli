@@ -1,21 +1,35 @@
 # BGG CLI
 
-This Bun-first TypeScript project manages your BoardGameGeek owned collection from the `src/app/collection.ts` CLI.
+This Bun-first TypeScript project manages your BoardGameGeek collection from the CLI.
 
-## Setup
+## Sign-in and stored data
 
-Create a `.env` file with your BGG credentials:
+On first use, the CLI prompts for your BoardGameGeek username and password and saves them under your user config directory (for example `~/.config/bgg-cli/credentials.json` on macOS and Linux).
+
+Session cookies for authenticated collection requests are cached next to that file as `collection-auth.json`. If BGG rejects those cookies, the CLI logs in again using your saved password.
+
+If `XDG_CONFIG_HOME` is set, the CLI uses `$XDG_CONFIG_HOME/bgg-cli/` instead of `~/.config/bgg-cli/`.
+
+## Installation
+
+Run the CLI directly from npm with Bun:
 
 ```sh
-BGG_USERNAME=your_bgg_username
-BGG_PASSWORD=your_bgg_password
+bunx @aabuhijleh/bgg-cli list
+bunx @aabuhijleh/bgg-cli sync ./games.json
 ```
 
-The CLI logs in to `https://boardgamegeek.com/login/api/v1` and stores the browser cookies BGG collection endpoints require in `.cache/bgg-collection-auth.json`.
+Or install it globally:
+
+```sh
+bun add -g @aabuhijleh/bgg-cli
+bgg list
+bgg sync ./games.json
+```
 
 ## Collection CLI
 
-Run the interactive TUI:
+For local development, run the interactive TUI:
 
 ```sh
 bun run collection
@@ -26,6 +40,13 @@ The TUI can list owned games, delete one selected collection item, or sync owned
 You can also run commands directly:
 
 ```sh
+bgg list
+bgg list --json
+bgg delete
+bgg delete --collid 145365092
+bgg sync
+bgg sync ./games.json
+
 bun run collection list
 bun run collection list --json
 bun run collection delete
@@ -38,7 +59,9 @@ bun run collection sync src/data/games.json
 
 ## Syncing Owned Games
 
-`bun run collection sync` reads `src/data/games.json` by default. The file must be a JSON array of BGG game objects; every valid object id in the file is synced, including expansions.
+`bgg sync` reads `src/data/games.json` by default when running from this repository. For installed usage, pass your own JSON file path, such as `bgg sync ./games.json`.
+
+The file must be a JSON array of BGG game objects; every valid object id in the file is synced, including expansions.
 
 The sync flow:
 
@@ -58,6 +81,12 @@ bun run check
 bun run typecheck
 ```
 
+Publish with Bun when you are ready:
+
+```sh
+bun publish
+```
+
 New collection CLI behavior should be added under `src/app/`, and shared collection logic should live in `src/lib/collection.ts`.
 
-This project should always use Bun APIs instead of Node APIs. For file I/O, use `Bun.file()` for reading, existence checks, and deletes, and `Bun.write()` for writes or copies. Use `Bun.env` for environment variables.
+This project should always use Bun APIs instead of Node APIs. For file I/O, use `Bun.file()` for reading, existence checks, and deletes, and `Bun.write()` for writes or copies. Use `Bun.env` only for ambient process environment values (for example `HOME`, `XDG_CONFIG_HOME`), not for BGG account secrets.

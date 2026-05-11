@@ -1,5 +1,6 @@
 import { log } from "@clack/prompts";
 import { defineCommand } from "citty";
+import { appCollectionAuthOptions } from "~/app/credentials.ts";
 import { withCollectionClient } from "~/lib/collection.ts";
 import {
   formatCollectionCount,
@@ -41,7 +42,7 @@ async function listCollection(options: { json: boolean }): Promise<void> {
     for (const entry of entries) {
       log.message(formatCollectionEntry(entry));
     }
-  });
+  }, appCollectionAuthOptions);
 }
 
 export default listCommand;

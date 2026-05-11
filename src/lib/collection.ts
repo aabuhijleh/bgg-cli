@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { log } from "@clack/prompts";
 import { $ } from "bun";
 
@@ -5,8 +6,152 @@ import { buildCookieMap, UnauthorizedError } from "./auth.ts";
 
 export const BGG_ORIGIN = "https://boardgamegeek.com";
 export const DEFAULT_GAMES_PATH = "src/data/games.json";
-export const DEFAULT_COLLECTION_AUTH_CACHE_PATH =
-  ".cache/bgg-collection-auth.json";
+export const COLLECTION_AUTH_FILENAME = "collection-auth.json";
+export const CREDENTIALS_FILENAME = "credentials.json";
+
+/** Join path segments with `/` for config and cache paths (works with Windows backslashes in input). */
+export function joinPathSegments(...segments: string[]): string {
+  if (segments.length === 0) {
+    return ".";
+  }
+
+  const firstSegment = segments[0] ?? "";
+  let result = firstSegment.replaceAll("\\", "/");
+
+  for (let index = 1; index < segments.length; index++) {
+    const nextSegment = segments[index]?.replaceAll("\\", "/") ?? "";
+
+    if (!nextSegment) {
+      continue;
+    }
+
+    const trimmedNext = nextSegment.replace(/^\/+/, "");
+    result = `${result.replace(/\/+$/, "")}/${trimmedNext}`;
+  }
+
+  return result.replace(/\/+/g, "/");
+}
+
+export function resolveUserHomeDirectory(): string {
+  const home = Bun.env.HOME?.trim() ?? Bun.env.USERPROFILE?.trim();
+
+  if (!home) {
+    throw new Error("Could not find your home directory (HOME or USERPROFILE)");
+  }
+
+  return home;
+}
+
+export function getBggCliConfigDirectory(): string {
+  const override = Bun.env.XDG_CONFIG_HOME?.trim();
+
+  if (override && override.length > 0) {
+    return joinPathSegments(override, "bgg-cli");
+  }
+
+  return joinPathSegments(resolveUserHomeDirectory(), ".config", "bgg-cli");
+}
+
+export function getCredentialsFilePath(
+  options: Pick<
+    CollectionAuthOptions,
+    "configDirectory" | "credentialsPath"
+  > = {},
+): string {
+  if (options.credentialsPath) {
+    return options.credentialsPath;
+  }
+
+  const configDirectory = options.configDirectory ?? getBggCliConfigDirectory();
+
+  return joinPathSegments(configDirectory, CREDENTIALS_FILENAME);
+}
+
+export function getCollectionAuthCachePath(
+  options: Pick<CollectionAuthOptions, "cachePath" | "configDirectory"> = {},
+): string {
+  if (options.cachePath) {
+    return options.cachePath;
+  }
+
+  const configDirectory = options.configDirectory ?? getBggCliConfigDirectory();
+
+  return joinPathSegments(configDirectory, COLLECTION_AUTH_FILENAME);
+}
+
+export async function readStoredCredentials(
+  credentialsPath: string,
+): Promise<{ password: string; username: string } | undefined> {
+  try {
+    const record = asRecord(await Bun.file(credentialsPath).json());
+    const username = record?.username;
+    const password = record?.password;
+
+    if (typeof username !== "string" || typeof password !== "string") {
+      return undefined;
+    }
+
+    const trimmedUsername = username.trim();
+
+    if (!trimmedUsername || password.length === 0) {
+      return undefined;
+    }
+
+    return {
+      password,
+      username: trimmedUsername,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+async function writeStoredCredentials(
+  credentialsPath: string,
+  credentials: { password: string; username: string },
+): Promise<void> {
+  await ensureParentDirectory(credentialsPath);
+  await Bun.write(
+    credentialsPath,
+    `${JSON.stringify({ password: credentials.password, username: credentials.username }, null, 2)}\n`,
+  );
+  await restrictCredentialFilePermissions(credentialsPath);
+}
+
+async function resolveLoginCredentials(
+  options: CollectionAuthOptions,
+): Promise<{ password: string; username: string }> {
+  const credentialsPath = getCredentialsFilePath(options);
+  const stored = await readStoredCredentials(credentialsPath);
+  let username = options.username ?? stored?.username;
+  let password = options.password ?? stored?.password;
+
+  if ((!username || !password) && options.promptCredentials) {
+    const prompted = await options.promptCredentials();
+    username = prompted.username;
+    password = prompted.password;
+    await writeStoredCredentials(credentialsPath, {
+      password,
+      username,
+    });
+  }
+
+  if (!username || !password) {
+    throw new Error(
+      "BGG sign-in is required before using this command (missing username or password)",
+    );
+  }
+
+  return { password, username };
+}
+
+async function restrictCredentialFilePermissions(path: string): Promise<void> {
+  try {
+    await $`chmod 600 ${path}`.quiet();
+  } catch {
+    // chmod is unavailable on some platforms (for example Windows shells)
+  }
+}
 
 type UnknownRecord = Record<string, unknown>;
 type Fetch = (
@@ -22,8 +167,11 @@ export type CollectionCookies = {
 
 export type CollectionAuthOptions = {
   cachePath?: string;
+  configDirectory?: string;
+  credentialsPath?: string;
   fetch?: Fetch;
   password?: string;
+  promptCredentials?: () => Promise<{ password: string; username: string }>;
   username?: string;
 };
 
@@ -214,12 +362,6 @@ export async function runWithCollectionAuth<T>(
   }
 }
 
-export function getCollectionAuthCachePath(
-  options: Pick<CollectionAuthOptions, "cachePath">,
-): string {
-  return options.cachePath ?? DEFAULT_COLLECTION_AUTH_CACHE_PATH;
-}
-
 export function createCollectionClient(options: CollectionClientOptions): {
   addOwnedGame: (objectId: number) => Promise<void>;
   deleteCollectionItem: (collid: number) => Promise<void>;
@@ -305,23 +447,26 @@ export async function withCollectionClient<T>(
   operation: (client: ReturnType<typeof createCollectionClient>) => Promise<T>,
   options: CollectionAuthOptions = {},
 ): Promise<T> {
-  const username = options.username ?? Bun.env.BGG_USERNAME;
+  return runWithCollectionAuth(async (cookies) => {
+    const credentialsPath = getCredentialsFilePath(options);
+    const stored = await readStoredCredentials(credentialsPath);
+    const username =
+      options.username ?? stored?.username ?? cookies.bggusername;
 
-  if (!username) {
-    throw new Error("Set BGG_USERNAME before running this script");
-  }
+    if (!username) {
+      throw new Error(
+        "Could not determine your BGG username. Delete your bgg-cli config directory and sign in again.",
+      );
+    }
 
-  return runWithCollectionAuth(
-    (cookies) =>
-      operation(
-        createCollectionClient({
-          cookies,
-          fetch: options.fetch,
-          username,
-        }),
-      ),
-    options,
-  );
+    return operation(
+      createCollectionClient({
+        cookies,
+        fetch: options.fetch,
+        username,
+      }),
+    );
+  }, options);
 }
 
 async function getCollectionCookies(
@@ -341,14 +486,7 @@ async function loginAndCacheCollectionCookies(
   cachePath: string,
   options: CollectionAuthOptions,
 ): Promise<CollectionCookies> {
-  const username = options.username ?? Bun.env.BGG_USERNAME;
-  const password = options.password ?? Bun.env.BGG_PASSWORD;
-
-  if (!username || !password) {
-    throw new Error(
-      "Set BGG_USERNAME and BGG_PASSWORD before running this script",
-    );
-  }
+  const { password, username } = await resolveLoginCredentials(options);
 
   const cookies = await loginToBggCollectionCookies(
     username,
@@ -393,7 +531,7 @@ async function ensureParentDirectory(path: string): Promise<void> {
     return;
   }
 
-  await $`mkdir -p ${directory}`.quiet();
+  await mkdir(directory, { recursive: true });
 }
 
 function getParentDirectory(path: string): string | undefined {
